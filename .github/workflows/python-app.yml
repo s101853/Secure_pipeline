@@ -1,0 +1,48 @@
+name: Security Checks
+
+on:
+  pull_request:                # Runs on pull requests
+  schedule:                    # Runs every week
+    - cron: '0 0 * * 0'        # Weekly on Sunday at midnight
+
+jobs:
+  security_scans:
+    name: Security Scans
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout Code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Run Static Application Security Testing (SAST)
+      - name: Run CodeQL (SAST Scan)
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python
+      - run: |
+          echo "Running CodeQL SAST analysis..."
+        # Runs the CodeQL analysis
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      # Step 3: Check for Dependency Vulnerabilities
+      - name: Check for dependency vulnerabilities
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test
+
+      # Step 4: Check for Secrets in Code
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          scanArguments: "--regex --entropy=True"
+
+      # Step 5: Fail the build on any warnings/errors
+      - name: Enforce Scan Results
+        if: failure()
+        run: |
+          echo "Security checks failed. Blocking the pull request."
+          exit 1
