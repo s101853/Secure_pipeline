@@ -22,15 +22,18 @@ jobs:
         with:
           fetch-depth: 0  # Ensure full history is fetched for scanning
 
-      # Step 2: Run Static Application Security Testing (SAST)
+      # Step 2: Run Static Application Security Testing (SAST) with CodeQL
       - name: Initialize CodeQL for SAST
         uses: github/codeql-action/init@v3
         with:
           languages: python
+          queries: ./  # Explicitly point to the repository code for custom queries (if needed)
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          output: ./codeql-results.sarif  # Save results locally for debugging
 
-      # Step 3: Check for Dependency Vulnerabilities
+      # Step 3: Check for Dependency Vulnerabilities with Snyk
       - name: Check for Dependency Vulnerabilities with Snyk
         uses: snyk/actions/python@master
         env:
@@ -39,7 +42,7 @@ jobs:
           command: test
           args: "--file=requirements.txt"  # Explicitly scan requirements.txt
 
-      # Step 4: Check for Secrets in Code
+      # Step 4: Check for Secrets in Code with TruffleHog
       - name: Scan for Secrets with TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
