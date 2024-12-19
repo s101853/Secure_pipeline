@@ -18,36 +18,37 @@ jobs:
     steps:
       # Step 1: Checkout Code
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Ensure full history is fetched for scanning
 
       # Step 2: Run Static Application Security Testing (SAST)
-      - name: Run CodeQL (SAST Scan)
+      - name: Initialize CodeQL for SAST
         uses: github/codeql-action/init@v3
         with:
           languages: python
-      - run: |
-          echo "Running CodeQL SAST analysis..."
-        # Runs the CodeQL analysis
-      - name: Perform CodeQL Analysis
+      - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
       # Step 3: Check for Dependency Vulnerabilities
-      - name: Check for dependency vulnerabilities
+      - name: Check for Dependency Vulnerabilities with Snyk
         uses: snyk/actions/python@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
+          args: "--file=requirements.txt"  # Explicitly scan requirements.txt
 
       # Step 4: Check for Secrets in Code
-      - name: Scan for secrets
+      - name: Scan for Secrets with TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
-          scanArguments: "--regex --entropy=True"
+          path: ./               # Explicitly reference the current directory
+          scanArguments: "--regex --entropy=True --json"  # Use JSON output for better debugging
 
       # Step 5: Fail the build on any warnings/errors
       - name: Enforce Scan Results
-        if: failure()
+        if: failure()  # Triggered if any step fails
         run: |
           echo "Security checks failed. Blocking the pull request."
           exit 1
