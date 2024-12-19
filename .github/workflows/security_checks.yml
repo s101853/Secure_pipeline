@@ -17,14 +17,14 @@ jobs:
 
       # Step 2: Run Static Application Security Testing (SAST)
       - name: Run CodeQL (SAST Scan)
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v4
         with:
           languages: python
       - run: |
           echo "Running CodeQL SAST analysis..."
         # Runs the CodeQL analysis
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v4
 
       # Step 3: Check for Dependency Vulnerabilities
       - name: Check for dependency vulnerabilities
