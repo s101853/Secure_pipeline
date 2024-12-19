@@ -5,6 +5,11 @@ on:
   schedule:                    # Runs every week
     - cron: '0 0 * * 0'        # Weekly on Sunday at midnight
 
+permissions:
+  contents: read               # Required to clone the repo
+  security-events: write       # Required for CodeQL to upload results
+  id-token: write              # Optional: Enables OpenID Connect (OIDC) token issuance for secure operations
+
 jobs:
   security_scans:
     name: Security Scans
