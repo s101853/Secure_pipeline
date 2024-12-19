@@ -36,10 +36,13 @@ jobs:
 
       # Step 3: Output Bandit Report
       - name: Output Bandit Report
-        if: ${{ steps.bandit.conclusion == 'failure' }}
         run: |
-          echo "Outputting Bandit report..."
-          cat bandit-report.json
+          echo "Displaying Bandit report..."
+          if [ -f bandit-report.json ]; then
+            cat bandit-report.json
+          else
+            echo "Bandit report not found."
+          fi
 
       # Step 4: Check for Dependency Vulnerabilities with Snyk
       - name: Check for Dependency Vulnerabilities with Snyk
