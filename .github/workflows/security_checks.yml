@@ -1,13 +1,13 @@
 name: Security Checks
 
 on:
-  pull_request:                # Runs on pull requests
-  schedule:                    # Runs every week
-    - cron: '0 0 * * 0'        # Weekly on Sunday at midnight
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 0'
 
 permissions:
-  contents: read               # Required to clone the repo
-  id-token: write              # Optional: Enables OpenID Connect (OIDC) token issuance for secure operations
+  contents: read
+  id-token: write
 
 jobs:
   security_scans:
@@ -15,29 +15,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout Code
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: ${{ github.head_ref }}  # Necessary for pull request workflows
+          ref: ${{ github.head_ref }}
 
-      # Step 2: Run Static Application Security Testing (SAST) with Bandit
       - name: Install Bandit
         run: |
           python -m pip install --upgrade pip
           pip install bandit
       - name: Run Bandit SAST Scan
         id: bandit
-        continue-on-error: true  # Allow Bandit to fail without stopping other scans
+        continue-on-error: true
         run: |
           echo "Running Bandit SAST analysis..."
           bandit -r . -f json -o bandit-report.json
 
-      # Step 3: Check for Dependency Vulnerabilities with Snyk
       - name: Check for Dependency Vulnerabilities with Snyk
         id: snyk
-        continue-on-error: true  # Allow Snyk to fail without stopping other scans
+        continue-on-error: true
         uses: snyk/actions/python@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -45,15 +42,13 @@ jobs:
           command: test
           args: "--file=requirements.txt"
 
-      # Step 4: Run TruffleHog Scan for Secrets
-      - name: Run TruffleHog Scan for Secrets
+      - name: Run TruffleHog v3 Scan for Secrets
         id: trufflehog
-        continue-on-error: true  # Allow TruffleHog to fail without stopping other scans
-        uses: edplato/trufflehog-actions-scan@master
-        with:
-          scanArguments: "--regex --entropy=False --max_depth=50"
+        continue-on-error: true
+        run: |
+          pip install trufflehog
+          trufflehog filesystem --json . > trufflehog-results.json
 
-      # Step 5: Evaluate Results
       - name: Summarize Scan Results
         run: |
           echo "Summarizing results from all scans..."
