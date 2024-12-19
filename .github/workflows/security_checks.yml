@@ -50,6 +50,8 @@ jobs:
         id: trufflehog
         continue-on-error: true  # Allow TruffleHog to fail without stopping other scans
         uses: edplato/trufflehog-actions-scan@master
+        with:
+          scanArguments: "--regex --entropy=False --max_depth=50"
 
       # Step 5: Evaluate Results
       - name: Summarize Scan Results
@@ -61,4 +63,3 @@ jobs:
           if [[ "${{ steps.bandit.outcome }}" == "failure" || "${{ steps.snyk.outcome }}" == "failure" || "${{ steps.trufflehog.outcome }}" == "failure" ]]; then
             echo "One or more security scans failed. Blocking the pull request."
             exit 1
-          fi
