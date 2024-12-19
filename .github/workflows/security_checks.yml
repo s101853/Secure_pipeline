@@ -28,17 +28,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install bandit
       - name: Run Bandit SAST Scan
+        id: bandit
+        continue-on-error: true  # Allow Bandit to fail without stopping other scans
         run: |
           echo "Running Bandit SAST analysis..."
           bandit -r . -f json -o bandit-report.json
-      - name: Check Bandit Scan Results
-        if: ${{ failure() }}
-        run: |
-          echo "Bandit found security issues. Failing the workflow."
-          exit 1
 
       # Step 3: Check for Dependency Vulnerabilities with Snyk
       - name: Check for Dependency Vulnerabilities with Snyk
+        id: snyk
+        continue-on-error: true  # Allow Snyk to fail without stopping other scans
         uses: snyk/actions/python@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -48,15 +47,18 @@ jobs:
 
       # Step 4: Run TruffleHog Scan for Secrets
       - name: Run TruffleHog Scan for Secrets
+        id: trufflehog
+        continue-on-error: true  # Allow TruffleHog to fail without stopping other scans
         uses: edplato/trufflehog-actions-scan@master
-        continue-on-error: true
-      - name: Check TruffleHog Scan Results
-        if: ${{ steps.trufflehog.outcome == 'failure' }}
-        run: exit 1
 
-      # Step 5: Fail the build on any warnings/errors
-      - name: Enforce Scan Results
-        if: failure()  # Triggered if any step fails
+      # Step 5: Evaluate Results
+      - name: Summarize Scan Results
         run: |
-          echo "Security checks failed. Blocking the pull request."
-          exit 1
+          echo "Summarizing results from all scans..."
+          echo "Bandit result: ${{ steps.bandit.outcome }}"
+          echo "Snyk result: ${{ steps.snyk.outcome }}"
+          echo "TruffleHog result: ${{ steps.trufflehog.outcome }}"
+          if [[ "${{ steps.bandit.outcome }}" == "failure" || "${{ steps.snyk.outcome }}" == "failure" || "${{ steps.trufflehog.outcome }}" == "failure" ]]; then
+            echo "One or more security scans failed. Blocking the pull request."
+            exit 1
+          fi
