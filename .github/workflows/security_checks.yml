@@ -34,7 +34,14 @@ jobs:
           echo "Running Bandit SAST analysis..."
           bandit -r . -f json -o bandit-report.json
 
-      # Step 3: Check for Dependency Vulnerabilities with Snyk
+      # Step 3: Output Bandit Report
+      - name: Output Bandit Report
+        if: ${{ steps.bandit.conclusion == 'failure' }}
+        run: |
+          echo "Outputting Bandit report..."
+          cat bandit-report.json
+
+      # Step 4: Check for Dependency Vulnerabilities with Snyk
       - name: Check for Dependency Vulnerabilities with Snyk
         id: snyk
         continue-on-error: true  # Allow Snyk to fail without stopping other scans
@@ -45,7 +52,7 @@ jobs:
           command: test
           args: "--file=requirements.txt"
 
-      # Step 4: Run TruffleHog Scan for Secrets
+      # Step 5: Run TruffleHog Scan for Secrets
       - name: Run TruffleHog Scan for Secrets
         id: trufflehog
         continue-on-error: true  # Allow TruffleHog to fail without stopping other scans
@@ -53,7 +60,7 @@ jobs:
         with:
           scanArguments: "--regex --entropy=False --max_depth=50"
 
-      # Step 5: Evaluate Results
+      # Step 6: Evaluate Results
       - name: Summarize Scan Results
         run: |
           echo "Summarizing results from all scans..."
