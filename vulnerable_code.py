@@ -1,10 +1,14 @@
 import os
 import requests
+import boto3
 
 # test2
 
 # Hardcoded secret (to trigger secret scanning tools)
 API_KEY = "12345-SECRET-KEY"
+
+# AWS Secret (for example purposes)
+AWS_SECRET_KEY = "AKIAIOSFODNN7EXAMPLE"
 
 # Vulnerable function: uses user input unsafely
 def insecure_eval():
